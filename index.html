@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tomato Crawler 🍅</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      /* ── Root grid ───────────────────────────────────── */
+      body {
+        background: #111;
+        display: grid;
+        grid-template-columns: 180px 800px 230px;
+        grid-template-rows: auto auto auto;
+        grid-template-areas:
+          ".       pomodoro  ."
+          "stats   game      inventory"
+          ".       sideview  .";
+        justify-content: center;
+        align-content: center;
+        min-height: 100vh;
+        font-family: monospace;
+        gap: 0;
+      }
+      #pomodoro-bar        { grid-area: pomodoro; }
+      #game-container      { grid-area: game;     position: relative; overflow: hidden; }
+      #side-view-container { grid-area: sideview; }
+
+      #game-container canvas,
+      #side-view-container canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+      #side-view-container {
+        height: 96px;
+        background: #1a1a1a;
+        overflow: hidden;
+      }
+      #pomodoro-bar {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── PomodoroHUD ─────────────────────────────────── */
+      #pomodoro-hud {
+        height: 36px;
+        background: #1a1a1a;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        font-family: monospace;
+        font-size: 13px;
+        color: #cccccc;
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+      }
+      #pomodoro-hud > span { z-index: 1; }
+      #pomodoro-progress {
+        position: absolute;
+        left: 0; top: 0; height: 100%;
+        width: 0%;
+        background: rgba(255,68,68,0.12);
+        transition: width 1s linear;
+        pointer-events: none;
+      }
+      #pomodoro-phase  { color: #ff4444; }
+      #pomodoro-timer  { color: #ffdd00; }
+      #pomodoro-tasks  { color: #888; }
+
+      /* ── TaskPanel ───────────────────────────────────── */
+      #task-panel {
+        background: #161616;
+        border-bottom: 1px solid #2a2a2a;
+        padding: 6px 14px;
+        font-family: monospace;
+        font-size: 11px;
+        color: #aaaaaa;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      #task-header {
+        color: #ff4444;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+      }
+      #task-input-row { display: flex; gap: 6px; }
+      #task-input {
+        flex: 1;
+        background: #222;
+        border: 1px solid #333;
+        color: #ccc;
+        font-family: monospace;
+        font-size: 11px;
+        padding: 3px 7px;
+        outline: none;
+      }
+      #task-add-btn {
+        background: #333;
+        border: 1px solid #555;
+        color: #ccc;
+        font-family: monospace;
+        font-size: 11px;
+        padding: 3px 10px;
+        cursor: pointer;
+      }
+      #task-list {
+        list-style: none;
+        max-height: 72px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      /* ── BehaviourSliders ────────────────────────────── */
+      #behaviour-sliders {
+        display: none;
+        flex-direction: column;
+        padding: 8px 4px 4px;
+        border-top: 1px solid #333;
+        font-family: monospace;
+        min-width: 220px;
+      }
+      #behaviour-sliders-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 8px;
+        letter-spacing: 0.05em;
+      }
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .slider-row .slider-label { width: 90px; font-size: 11px; color: #ccc; }
+      .slider-row .slider-label.dormant { color: #666; }
+      .slider-row input[type=range] { flex: 1; accent-color: #ff4444; }
+      .slider-row input[type=range]:disabled { opacity: 0.35; cursor: not-allowed; }
+      .slider-row .slider-val { width: 20px; text-align: right; font-size: 11px; color: #ffdd00; }
+      .slider-row .slider-soon { font-size: 9px; color: #555; background: #222; padding: 1px 4px; border-radius: 3px; }
+
+      /* ── EventLog ────────────────────────────────────── */
+      #event-log {
+        display: none;
+        flex-direction: column;
+        border-top: 1px solid #333;
+        z-index: 25;
+        font-family: monospace;
+        font-size: 11px;
+        color: #cccccc;
+        width: 100%;
+      }
+      #event-log-header {
+        padding: 6px 10px;
+        cursor: pointer;
+        user-select: none;
+        color: #aaaaaa;
+        border-bottom: 1px solid #222;
+      }
+      #event-log-body {
+        padding: 6px 10px;
+        max-height: 180px;
+        overflow-y: auto;
+        display: none;
+      }
+      #event-log-footer {
+        padding: 4px 8px;
+        display: none;
+        justify-content: flex-end;
+        border-top: 1px solid #222;
+      }
+      #event-log-save {
+        background: #1a1a2e;
+        color: #aabbdd;
+        border: 1px solid #334;
+        border-radius: 3px;
+        padding: 3px 10px;
+        font-family: monospace;
+        font-size: 10px;
+        cursor: pointer;
+        margin-left: auto;
+      }
+      #event-log-save:hover { color: #ffffff; border-color: #6688aa; }
+
+      /* ── CharacterStatsPanel ─────────────────────────── */
+      #character-stats-panel {
+        grid-area: stats;
+        align-self: start;
+        font-family: monospace;
+        font-size: 11px;
+        color: #cccccc;
+        background-color: #1a1a1a;
+        padding: 10px 10px;
+        border-right: 1px solid #2a2a2a;
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        line-height: 1.4;
+        min-height: 100%;
+      }
+      #stats-hp  { margin-bottom: 2px; color: #ff6666; }
+      #stats-str { margin-bottom: 2px; }
+      #stats-def { margin-bottom: 2px; }
+
+      /* ── InventoryPanel ──────────────────────────────── */
+      #inventory-panel {
+        grid-area: inventory;
+        align-self: start;
+        font-family: monospace;
+        font-size: 11px;
+        color: #cccccc;
+        background-color: #1a1a1a;
+        border-left: 1px solid #2a2a2a;
+        display: none;
+        flex-direction: column;
+        min-height: 100%;
+      }
+      #inventory-header {
+        padding: 6px 8px;
+        border-bottom: 1px solid #444444;
+        color: #ffdd66;
+        font-weight: bold;
+        font-size: 12px;
+      }
+      #inventory-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px;
+        max-height: 500px;
+      }
+      #inventory-status {
+        padding: 4px 8px;
+        border-top: 1px solid #444444;
+        color: #888888;
+        font-size: 9px;
+        text-align: center;
+        background-color: #000000cc;
+      }
+
+      /* ── CharacterStatusPanel (dev) ──────────────────── */
+      #character-status-panel {
+        position: absolute;
+        top: 36px;
+        right: 12px;
+        display: none;
+        background: rgba(0,0,0,0.82);
+        border: 1px solid #ff8800;
+        border-radius: 5px;
+        padding: 10px 14px;
+        z-index: 50;
+        font-family: monospace;
+        min-width: 220px;
+      }
+      #character-status-panel .status-title {
+        font-size: 10px;
+        color: #ff8800;
+        margin-bottom: 6px;
+        letter-spacing: 0.06em;
+      }
+      .status-row {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 3px;
+      }
+      .status-row .status-lbl {
+        width: 68px;
+        color: #888;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+      .status-row .status-val {
+        color: #ffffff;
+        font-size: 11px;
+      }
+
+      /* ── DebugControls (dev) ─────────────────────────── */
+      #debug-controls {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        background: rgba(0,0,0,0.82);
+        border: 1px solid #ff8800;
+        border-radius: 5px;
+        padding: 5px 12px;
+        z-index: 50;
+        font-family: monospace;
+        min-width: 340px;
+      }
+      #debug-btn-row { display: flex; align-items: center; }
+      #debug-btn-row .debug-label {
+        font-size: 10px;
+        color: #ff8800;
+        margin-right: 10px;
+        letter-spacing: 0.08em;
+      }
+      .debug-btn {
+        color: #ffffff;
+        border: 1px solid #555;
+        border-radius: 3px;
+        padding: 3px 9px;
+        margin-right: 5px;
+        font-family: monospace;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .debug-btn:hover { opacity: 0.8; }
+      #debug-map-config,
+      #debug-spawn-config,
+      #debug-legend {
+        margin-top: 6px;
+        width: 100%;
+        color: #ddd;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      #debug-map-config > summary,
+      #debug-spawn-config > summary,
+      #debug-legend > summary {
+        cursor: pointer;
+        color: #ff8800;
+        padding: 2px 0;
+      }
+      .debug-slider-grid,
+      #debug-legend-list {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 4px 8px;
+        align-items: center;
+        padding: 6px 4px 2px;
+      }
+
+      /* ── BreakOverlay ────────────────────────────────── */
+      #break-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.88);
+        z-index: 999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        font-family: monospace;
+        color: #cccccc;
+      }
+      #break-title {
+        font-size: 22px;
+        color: #ff4444;
+        text-align: center;
+        margin: 0;
+      }
+      #break-timer {
+        font-size: 48px;
+        color: #ffdd00;
+        letter-spacing: 4px;
+      }
+      #break-sub {
+        color: #555;
+        font-size: 12px;
+      }
+      #break-skip {
+        margin-top: 10px;
+        background: transparent;
+        border: 1px solid #444;
+        color: #888;
+        font-family: monospace;
+        font-size: 12px;
+        padding: 6px 18px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── Pomodoro bar ─────────────────────────────────────────────────── -->
+    <div id="pomodoro-bar">
+      <!-- PomodoroHUD -->
+      <div id="pomodoro-hud">
+        <div id="pomodoro-progress"></div>
+        <span id="pomodoro-tomato">🍅 0</span>
+        <span id="pomodoro-phase">Ready</span>
+        <span id="pomodoro-timer">--:--</span>
+        <span id="pomodoro-tasks">0 tasks</span>
+      </div>
+      <!-- TaskPanel -->
+      <div id="task-panel">
+        <div id="task-header">The Tomato's Objectives</div>
+        <div id="task-input-row">
+          <input id="task-input" type="text" placeholder="Add a task…" />
+          <button id="task-add-btn">+ Add</button>
+        </div>
+        <ul id="task-list"></ul>
+      </div>
+    </div>
+
+    <!-- ── Left column: character stats ───────────────────────────────── -->
+    <div id="character-stats-panel">
+      <div id="stats-hp">❤ HP 100/100</div>
+      <div id="stats-str">⚔ STR 5</div>
+      <div id="stats-def">🛡 DEF 5</div>
+      <div id="stats-spd">💨 SPD 5</div>
+    </div>
+
+    <!-- ── Main game canvas ─────────────────────────────────────────────── -->
+    <div id="game-container">
+
+      <!-- CharacterStatusPanel (dev only — shown via JS in DEV mode) -->
+      <div id="character-status-panel">
+        <div class="status-title">🛠 Character Status</div>
+        <div class="status-row"><span class="status-lbl">Tile:</span><span class="status-val" id="status-tile">—</span></div>
+        <div class="status-row"><span class="status-lbl">Type:</span><span class="status-val" id="status-type">—</span></div>
+        <div class="status-row"><span class="status-lbl">Room:</span><span class="status-val" id="status-room">—</span></div>
+        <div class="status-row"><span class="status-lbl">Floor:</span><span class="status-val" id="status-floor">—</span></div>
+        <div class="status-row"><span class="status-lbl">Run State:</span><span class="status-val" id="status-runstate">—</span></div>
+      </div>
+
+      <!-- DebugControls (dev only — shown via JS in DEV mode) -->
+      <div id="debug-controls">
+        <div id="debug-btn-row">
+          <span class="debug-label">🛠 DEV</span>
+          <button id="debug-btn-play"    class="debug-btn" style="background:#226622">▶ Play</button>
+          <button id="debug-btn-pause"   class="debug-btn" style="background:#444400">⏸ Pause</button>
+          <button id="debug-btn-resume"  class="debug-btn" style="background:#224466">▶ Resume</button>
+          <button id="debug-btn-restart" class="debug-btn" style="background:#662222">↺ Restart</button>
+          <button id="debug-btn-reveal"  class="debug-btn" style="background:#444488">👁 Reveal</button>
+          <button id="debug-btn-grid"    class="debug-btn" style="background:#335533">🔲 Grid</button>
+          <button id="debug-btn-parity"  class="debug-btn" style="background:#553333">🧪 Parity</button>
+        </div>
+
+        <!-- BehaviourSliders — pre-run panel, nested in debug overlay -->
+        <div id="behaviour-sliders">
+          <div id="behaviour-sliders-title">Pre-Run Behaviour</div>
+          <div class="slider-row" id="slider-row-explore">
+            <span class="slider-label">🗺 Explore</span>
+            <input type="range" id="slider-explore" min="0" max="10" step="1" value="5" />
+            <span class="slider-val" id="slider-explore-val">5</span>
+          </div>
+          <div class="slider-row" id="slider-row-fight">
+            <span class="slider-label dormant">⚔ Fight</span>
+            <input type="range" id="slider-fight" min="0" max="10" step="1" value="5" disabled />
+            <span class="slider-soon">soon</span>
+          </div>
+          <div class="slider-row" id="slider-row-exit">
+            <span class="slider-label">🚪 Exit Fast</span>
+            <input type="range" id="slider-exit" min="0" max="10" step="1" value="5" />
+            <span class="slider-val" id="slider-exit-val">5</span>
+          </div>
+        </div>
+
+        <!-- EventLog — nested in debug overlay -->
+        <div id="event-log">
+          <div id="event-log-header">▶ Event Log</div>
+          <div id="event-log-body"></div>
+          <div id="event-log-footer">
+            <button id="event-log-save" title="Save log to screenshots/logs folder">💾 Save Log</button>
+          </div>
+        </div>
+
+        <details id="debug-map-config">
+          <summary>🗺 Map Config</summary>
+          <div class="debug-slider-grid" id="debug-map-config-grid"></div>
+        </details>
+        <details id="debug-spawn-config">
+          <summary>🎁 Item Spawn Config</summary>
+          <div class="debug-slider-grid" id="debug-spawn-config-grid"></div>
+        </details>
+        <details id="debug-legend">
+          <summary>🗝 Tile Legend</summary>
+          <div id="debug-legend-list"></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- ── Right column: inventory ──────────────────────────────────────── -->
+    <div id="inventory-panel">
+      <div id="inventory-header">🎒 The Tomato's Pockets</div>
+      <div id="inventory-list"></div>
+      <div id="inventory-status">Collecting items...</div>
+    </div>
+
+    <!-- ── Side-view strip ─────────────────────────────────────────────── -->
+    <div id="side-view-container"></div>
+
+    <!-- ── Break overlay (full-screen) ─────────────────────────────────── -->
+    <div id="break-overlay">
+      <h2 id="break-title"></h2>
+      <div id="break-timer">--:--</div>
+      <p id="break-sub">Step away. Breathe. The dungeon will still be there.</p>
+      <button id="break-skip">⏭  Skip Break</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
