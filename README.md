@@ -1,88 +1,76 @@
-# Tomato Crawler 🍅
+# 🍅 Tomato Crawler
 
-> A 2D procedurally generated dungeon crawler that IS your Pomodoro timer.
+> *A 2D procedurally generated dungeon crawler that IS your Pomodoro timer.*
 
-🌐 **Live Demo:** _https://\<your-username\>.github.io/TomatoCrawler/_ *(available after first deploy to `main`)*
-
----
-
-## What is it?
-
-You are **The Tomato**. You explore a dungeon. The dungeon is also your work timer.
-
-- **Press ▶ Start** — The Tomato enters the dungeon and begins exploring autonomously
-- **You go do your work** — The Tomato fights Breadknights and collects Olive Oil Flasks while you focus
-- **Timer ends → break starts** — The dungeon pauses. You spend Sauce Points, equip loot, prep the next run
-- **Repeat** — Deeper floors, harder enemies, better rewards
-
-Your session settings shape the run. More tasks queued = harder dungeon = better loot. Leave early and The Tomato retreats in shame, losing a few items.
+[![Deploy to GitHub Pages](https://github.com/Canesbarbato/TomatoCrawler/actions/workflows/deploy.yml/badge.svg)](https://github.com/Canesbarbato/TomatoCrawler/actions/workflows/deploy.yml)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![Platform: Web](https://img.shields.io/badge/platform-Web%20%7C%20Electron%20%7C%20Capacitor-blue)
 
 ---
 
-## Session Structure
+## What is Tomato Crawler?
+
+**Tomato Crawler** is a Pomodoro productivity timer disguised as a dungeon crawler — or a dungeon crawler disguised as a Pomodoro timer. The lines are blurry. The tomato doesn't care.
+
+You press ▶ **Start**. *The Tomato* — your character, a tomato, no other name — descends into a procedurally generated dungeon and explores it autonomously while you work. The game runs itself. You watch (or don't). When the focus session ends, you spend **Sauce Points**, equip loot, and start again.
+
+No login. No setup. No separate timer app. The game IS the timer.
+
+---
+
+## Features
+
+| Feature | Status |
+|---|---|
+| Procedural BSP dungeon generation | ✅ |
+| Fog-of-war (undiscovered / visible / revealed) | ✅ |
+| Autonomous player agent (exploration AI) | ✅ |
+| Turn-based combat (Breadknights, Saucerers, etc.) | ✅ |
+| Side-view combat scene | ✅ |
+| Item pickups & inventory panel | ✅ |
+| Character stats & levelling | ✅ |
+| Pomodoro HUD (focus / short break / long break) | ✅ |
+| Break overlay with Sauce Point spending | ✅ |
+| Task panel (tasks queued → difficulty scaling) | ✅ |
+| Event log (deadpan combat narration) | ✅ |
+| Behaviour sliders (exploration bias) | ✅ |
+| Session persistence via `localStorage` | ✅ |
+| GitHub Pages auto-deploy (CI/CD) | ✅ |
+| Desktop shell (Electron) | 🔒 Planned |
+| Mobile shell (Capacitor) | 🔒 Planned |
+
+---
+
+## The Pomodoro Cycle
 
 | Phase | Duration | What happens |
 |---|---|---|
-| Focus / Run | 25 min | The Tomato explores the dungeon autonomously |
-| Short Break / Upgrade | 5 min | You spend Sauce Points and equip items |
-| Long Break | 15 min | *"The Tomato rests. Mysteriously."* — after every 4 runs |
+| **Focus / Run** | 25 min | The Tomato explores the dungeon autonomously |
+| **Short Break / Upgrade** | 5 min | Spend Sauce Points, equip loot, review tasks |
+| **Long Break** | 15 min | After every 4 completed runs — "The Tomato rests. Mysteriously." |
 
----
-
-## Session → Difficulty
+### Session → Difficulty Mapping
 
 | Setting | Effect |
 |---|---|
-| Session duration | Sets dungeon depth & floors available |
-| Tasks queued | Raises enemy difficulty + reward multiplier |
+| Session duration | Sets dungeon depth and number of floors |
+| Tasks queued | Raises enemy difficulty tier + reward multiplier |
 | Tasks completed | Bonus loot drop at run end |
-| Full session | Full Sauce Points + all loot kept + 🍅 +1 |
-| Early exit | Retreat. No Sauce Points. Lose 1–3 items. |
+| Full session completed | Full Sauce Points, all loot kept, 🍅 counter +1 |
+| Early exit (soft penalty) | Character retreats — no Sauce Points, 1–3 items lost |
 
 ---
 
-## Dungeon Legend
+## The World (Mockery Fantasy)
 
-### Tiles
+Nothing in Tomato Crawler takes itself seriously.
 
-| Symbol | Name | Description |
-|---|---|---|
-| 🟫 | **Wall** | Solid dungeon wall. Impassable. |
-| 🟩 | **Floor** | Interior of a room. Safe to walk. |
-| 🟪 | **Corridor** | Passage carved between rooms. The Tomato squeezes nervously. |
-| 🚪 | **Entrance** | Player spawn marker on each floor. |
-| 🪜 | **Stairs** | Descend to the next floor. The Tomato reluctantly obliges. |
-| ⬛ | **Undiscovered** | Not yet revealed by fog of war. |
-
-### Characters & Objects
-
-| Symbol | Name | Description |
-|---|---|---|
-| 🍅 | **The Tomato** | Player character. Current position. Deadpan. Menacing. |
-| 🍞 | **Breadknight** | Enemy type. Mockery of a medieval knight. |
-| 🥒 | **Saucerer** | Enemy type. Wielder of questionable condiments. |
-| 👹 | **Mouldy Goblin** | Enemy type. Clearly past its best-by date. |
-| 🧙 | **Condiment Witch** | Enemy type. Foreboding presence. Spices unknown. |
-| 💛 | **Loot** | Found items. See Items section for full list. |
-
-### Items
-
-Collect these during your run to boost character stats. Equip and combine during breaks to maximize power.
-
-| Name | Stats Boosted | Description |
-|---|---|---|
-| **Crouton Shield** | +3 Defence | Slightly stale. Offers mild resistance. |
-| **Olive Oil Flask** | +2 Speed | The Tomato moves faster. Suspiciously. |
-| **Parchment of Mild Threat** | +2 Strength, +1 Defence | The words are concerning. Mostly. |
-| **Stale Breadloaf** | +4 Strength | Dense. Heavy. Effective. |
-| **Vinaigrette** | +3 Speed | Applied externally. Do not ask. |
-
-### Fog of War
-
-| Symbol | Name | Description |
-|---|---|---|
-| ⬛ | **Undiscovered** | Not yet revealed. Mystery awaits. |
-| 👁️ | **Visible** | Currently visible to The Tomato. |
+| Category | Examples |
+|---|---|
+| **Enemies** | Breadknight, Saucerer, Mouldy Goblin, The Condiment Witch |
+| **Dungeon floors** | The Pantry, The Fridge Depths, The Forgotten Tupperware, The Spice Rack |
+| **Items / loot** | Olive Oil Flask, Crouton Shield, Parchment of Mild Threat |
+| **XP currency** | Sauce Points |
 
 ---
 
@@ -90,56 +78,122 @@ Collect these during your run to boost character stats. Equip and combine during
 
 | Layer | Technology |
 |---|---|
-| Game Framework | Phaser.js (v3) |
-| Build Tool | Vite |
+| Game framework | [Phaser.js](https://phaser.io/) |
+| Build tool | [Vite](https://vitejs.dev/) |
 | Language | TypeScript |
-| Desktop | Electron |
-| Mobile | Capacitor (iOS / Android) |
-| Runtime | Node.js |
-
----
-
-## Release Ladder
-
-| # | Platform | Status |
-|---|---|---|
-| 1️⃣ | **Web (GitHub Pages)** | 🎯 First target |
-| 2️⃣ | Desktop via Electron | Planned |
-| 3️⃣ | Mobile via Capacitor | Planned |
+| Desktop shell | Electron *(planned)* |
+| Mobile shell | Capacitor *(planned)* |
+| CI/CD | GitHub Actions → GitHub Pages |
 
 ---
 
 ## Getting Started
 
+### Prerequisites
+- Node.js ≥ 18
+- npm ≥ 9
+
+### Install & Run
+
 ```bash
-# Install dependencies (includes canvas for placeholder generation)
+# Clone the repo
+git clone git@github.com:Canesbarbato/TomatoCrawler.git
+cd TomatoCrawler
+
+# Install dependencies
 npm install
 
 # Generate placeholder assets
 node scripts/generate-placeholders.js
 
-# Start dev server
+# Start the dev server
 npm run dev
+```
 
-# Build for production
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Build for Production
+
+```bash
 npm run build
 ```
 
-Pushing to `main` automatically builds and deploys to GitHub Pages via GitHub Actions.
+Output goes to `dist/`. The build is a fully static site — drop it anywhere.
 
 ---
 
-## Documentation
+## Project Structure
 
-| File | Purpose |
+```
+/
+├── .github/
+│   ├── copilot-instructions.md      ← agent rules & game design reference
+│   ├── plans/PLANNING_LOG.md        ← rolling implementation log
+│   ├── decisions/ADR_LOG.md         ← architecture decision records
+│   └── workflows/deploy.yml         ← GitHub Actions: build + deploy to Pages
+├── scripts/
+│   └── generate-placeholders.js    ← generates all placeholder PNGs
+├── src/
+│   ├── game/
+│   │   ├── agents/PlayerAgent.ts    ← autonomous exploration AI
+│   │   ├── assets/AssetManifest.ts  ← single source of truth for all assets
+│   │   ├── dungeon/                 ← BSP generator, tile renderer, types
+│   │   ├── enemies/                 ← combat resolver, enemy registry & spawner
+│   │   ├── fog/                     ← fog-of-war model & view
+│   │   ├── items/                   ← item registry & types
+│   │   ├── managers/RunManager.ts   ← run lifecycle management
+│   │   ├── scenes/                  ← Phaser scenes (Boot, Game, SideView)
+│   │   └── ui/                      ← all HUD and overlay components
+│   └── shared/
+│       ├── EventBus.ts              ← cross-system event bus
+│       ├── PomodoroManager.ts       ← timer logic
+│       ├── SessionStore.ts          ← localStorage persistence
+│       └── StorageAdapter.ts        ← platform abstraction for storage
+├── public/assets/placeholders/      ← 16×16 placeholder PNGs
+├── index.html
+├── package.json
+└── vite.config.ts
+```
+
+---
+
+## Asset System
+
+All placeholder assets are `16×16px` PNGs generated by `scripts/generate-placeholders.js`.
+
+| Asset type | Color |
 |---|---|
-| [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | Agent instructions, stack overview, mandatory rules |
-| [`.github/plans/PLANNING_LOG.md`](.github/plans/PLANNING_LOG.md) | Rolling log of all planning sessions |
-| [`.github/decisions/ADR_LOG.md`](.github/decisions/ADR_LOG.md) | Architecture decision records |
+| Undiscovered tile | `#000000` |
+| Floor tile | `#888888` |
+| Wall tile | `#4a3728` |
+| Player (The Tomato) | `#4488ff` |
+| Enemy | `#ff4444` |
+| Item | `#ffdd00` |
+
+To swap in real art: replace files in `public/assets/` and update paths in `src/game/assets/AssetManifest.ts`. No other code changes required.
 
 ---
 
-## Status
+## Deployment
 
-🟢 **All design decisions resolved** — ready for implementation.
-Placeholder assets active (see [ADR-006](.github/decisions/ADR_LOG.md)). Game identity, Pomodoro cycle, session-driven difficulty, soft penalty, and HUD layer all defined and logged.
+The game auto-deploys to **GitHub Pages** on every push to `main` via GitHub Actions.
+
+Live URL: `https://canesbarbato.github.io/TomatoCrawler/`
+
+> **Web-first rule:** All features must work fully in a standard browser before being considered complete. Desktop (Electron) and mobile (Capacitor) layers add platform enhancements but are never required for core gameplay.
+
+---
+
+## Contributing
+
+1. Read `.github/plans/PLANNING_LOG.md` before touching any game code
+2. Read `.github/decisions/ADR_LOG.md` before making any architecture choices
+3. Follow the **mockery fantasy** naming convention for all in-game text
+4. All asset keys and paths must go through `src/game/assets/AssetManifest.ts`
+5. Game logic must run identically in browser, Electron, and Capacitor
+
+---
+
+## License
+
+MIT — do whatever you want with it. The Tomato has no strong feelings either way.
